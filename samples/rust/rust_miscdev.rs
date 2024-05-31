@@ -12,6 +12,11 @@
 //! / # sudo cat /dev/rust_misc  -> Hello
 //! 
 
+use core::borrow::BorrowMut;
+use core::clone::Clone;
+use core::convert::AsRef;
+use core::result::Result::Ok;
+
 use kernel::prelude::*;
 use kernel::{
     file::{self, File},
@@ -65,7 +70,7 @@ impl file::Operations for RustFile {
     fn open(_shared: &Arc<RustMiscdevData>, _file: &file::File) -> Result<Self::Data> {
         pr_info!("open in miscdevice\n",);
         //TODO
-        todo!()
+        Ok(_shared.clone())
     }
 
     fn read(
@@ -76,8 +81,7 @@ impl file::Operations for RustFile {
     ) -> Result<usize> {
         pr_info!("read in miscdevice\n");
         //TODO
-        todo!()
-        
+        file::read_from_slice(_shared.inner.lock().as_slice(), _writer, _offset)
     }
 
     fn write(
@@ -87,9 +91,13 @@ impl file::Operations for RustFile {
         _offset: u64,
     ) -> Result<usize> {
         pr_info!("write in miscdevice\n");
-        //TODO
-        todo!()
-
+        let data: Vec<u8> = _reader.read_all()?;
+        let mut i = _offset;
+        for s in data {
+            _shared.inner.lock()[i as usize] = s;
+            i = i + 1;
+        }
+        Ok(_reader.len())
     }
 
     fn release(_data: Self::Data, _file: &File) {
