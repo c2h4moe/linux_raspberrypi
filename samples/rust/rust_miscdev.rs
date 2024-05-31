@@ -93,11 +93,12 @@ impl file::Operations for RustFile {
         pr_info!("write in miscdevice\n");
         let data: Vec<u8> = _reader.read_all()?;
         let mut i = _offset;
-        for s in data {
-            _shared.inner.lock()[i as usize] = s;
+        for s in &data {
+            pr_info!("now reading: {}", s);
+            _shared.inner.lock()[i as usize] = *s;
             i = i + 1;
         }
-        Ok(_reader.len())
+        Ok(data.len())
     }
 
     fn release(_data: Self::Data, _file: &File) {
